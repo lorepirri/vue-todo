@@ -1,16 +1,33 @@
 <template>
   <div>
     <div class="overlay" v-if="this.editingTodoId != -1"></div>
-    <input v-model="currentTodo" @keydown.enter="addTodo()" placeholder="Add a todo">
+    <md-field>
+      <md-input v-model="currentTodo" @keydown.enter="addTodo()" placeholder="Add a todo"></md-input>
+    </md-field>
     <ul class="todos">
       <li v-for="todo in todos" :key="todo.id">
         <div v-if="todo.editing == false">
-          <input type="checkbox" @click="checkAsDoneTodo(todo)" value="todo.completed">
-          <span :class="{checkedTodo: todo.completed}" @dblclick="editTodo(todo)">{{ todo.label }}</span>
-          <button @click="removeTodo(todo)">Delete</button>
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-size-10"><md-checkbox type="checkbox" @click="checkAsDoneTodo(todo)" v-model="todo.completed" /></div>
+            <div class="md-layout-item md-layout md-alignment-center-left">
+            <span :class="{checkedTodo: todo.completed}" @dblclick="editTodo(todo)">{{ todo.label }}</span></div>
+            <div class="md-layout-item md-size-25"><md-button class="md-raised" @click="removeTodo(todo)">Delete</md-button></div>
+            <div class="md-layout-item md-small-hide"></div>
+          </div>    
         </div>
         <div v-if="todo.editing == true">
-          <input class="updateTodo" ref="editingTodo" v-model="editingTodo" @keydown.esc="stopEditingTodo()" @keydown.enter="updateTodo(todo)" placeholder="Enter a new label" value="todo.label">
+          <md-field class="updateTodo">
+            <md-input 
+              class="updateTodo" 
+              ref="editingTodo" 
+              v-model="editingTodo"
+              v-todo-focus="true"
+              @blur="stopEditingTodo()"
+              @keydown.esc="stopEditingTodo()" 
+              @keydown.enter="updateTodo(todo)" 
+              placeholder="Enter a new label" 
+              value="todo.label"></md-input>
+          </md-field>
         </div>
       </li>
     </ul>
@@ -27,14 +44,6 @@ export default {
       editingTodo: ''
     };
   },
-  created() {
-    window.addEventListener('click', this.onClick);
-    window.addEventListener('keydown', this.onKeydown);
-  },
-  beforeDestroy() {
-    window.removeEventListener('click', this.onClick)
-    window.removeEventListener('keydown', this.onKeydown);
-  },  
   methods: {
     addTodo() {
       if (this.currentTodo.trim() != '') {
@@ -91,16 +100,29 @@ export default {
       }
     },
     onKeydown(e) {
-      console.log("key");
       if(e.key == "Escape") {
         this.stopEditingTodo();
       }
     }          
-  }
+  },
+  // a custom directive to wait for the DOM to be updated
+  // before focusing on the input field.
+  // http://vuejs.org/guide/custom-directive.html
+  directives: {
+    'todo-focus': function (el, binding) {
+      if (binding.value) {
+        el.focus()
+      }
+    }
+  }  
 };
 </script>
 
 <style>
+.todos {
+  list-style-type: none;
+}
+
 .checkedTodo {
   color: lightgray;
   text-decoration: line-through;
@@ -118,6 +140,7 @@ export default {
 
 .updateTodo {
   position: relative;
+  background: white;
   z-index: 11; /* 1px higher than the overlay layer */
 }
 </style>
